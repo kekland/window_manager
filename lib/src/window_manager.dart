@@ -643,6 +643,15 @@ class WindowManager {
     );
   }
 
+  Future<void> setTitleBarHeight(double titleBarHeight) {
+    final Map<String, dynamic> arguments = {
+      'devicePixelRatio': window.devicePixelRatio,
+      'height': titleBarHeight,
+    };
+
+    return _channel.invokeMethod<bool>('setTitleBarHeight', arguments);
+  }
+
   /// Grabs the keyboard.
   /// @platforms linux
   Future<bool> grabKeyboard() async {

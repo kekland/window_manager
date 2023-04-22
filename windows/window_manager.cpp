@@ -57,6 +57,7 @@ class WindowManager {
   bool is_skip_taskbar_ = true;
   std::string title_bar_style_ = "normal";
   double opacity_ = 1;
+  double title_bar_height_ = 0;
 
   bool is_resizing_ = false;
   bool is_moving_ = false;
@@ -120,6 +121,7 @@ class WindowManager {
   void WindowManager::PopUpWindowMenu(const flutter::EncodableMap& args);
   void WindowManager::StartDragging();
   void WindowManager::StartResizing(const flutter::EncodableMap& args);
+  void WindowManager::SetTitleBarHeight(const flutter::EncodableMap& args);
 
  private:
   bool g_is_window_fullscreen = false;
@@ -635,22 +637,16 @@ void WindowManager::SetAlwaysOnTop(const flutter::EncodableMap& args) {
 }
 
 bool WindowManager::IsAlwaysOnBottom() {
-    return is_always_on_bottom_;
+  return is_always_on_bottom_;
 }
 
 void WindowManager::SetAlwaysOnBottom(const flutter::EncodableMap& args) {
   is_always_on_bottom_ =
       std::get<bool>(args.at(flutter::EncodableValue("isAlwaysOnBottom")));
 
-  SetWindowPos(
-    GetMainWindow(),
-    is_always_on_bottom_ ? HWND_BOTTOM : HWND_NOTOPMOST,
-    0,
-    0,
-    0,
-    0,
-    SWP_NOMOVE | SWP_NOSIZE
-  );
+  SetWindowPos(GetMainWindow(),
+               is_always_on_bottom_ ? HWND_BOTTOM : HWND_NOTOPMOST, 0, 0, 0, 0,
+               SWP_NOMOVE | SWP_NOSIZE);
 }
 
 std::string WindowManager::GetTitle() {
@@ -876,4 +872,12 @@ void WindowManager::StartResizing(const flutter::EncodableMap& args) {
               MAKELPARAM(cursorPos.x, cursorPos.y));
 }
 
-}  // namespace
+void WindowManager::SetTitleBarHeight(const flutter::EncodableMap& args) {
+  double devicePixelRatio =
+      std::get<double>(args.at(flutter::EncodableValue("devicePixelRatio")));
+
+  title_bar_height_ = 
+      std::get<double>(args.at(flutter::EncodableValue("height"))) * devicePixelRatio;
+}  
+
+}// namespace

@@ -109,7 +109,8 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
   std::optional<LRESULT> result = std::nullopt;
 
   if (message == WM_DPICHANGED) {
-    window_manager->pixel_ratio_ = (float) LOWORD(wParam) / USER_DEFAULT_SCREEN_DPI;
+    window_manager->pixel_ratio_ =
+        (float)LOWORD(wParam) / USER_DEFAULT_SCREEN_DPI;
   }
 
   if (message == WM_NCCALCSIZE) {
@@ -167,21 +168,17 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     MINMAXINFO* info = reinterpret_cast<MINMAXINFO*>(lParam);
     // For the special "unconstrained" values, leave the defaults.
     if (window_manager->minimum_size_.x != 0)
-      info->ptMinTrackSize.x =
-          static_cast<LONG> (window_manager->minimum_size_.x *
-          window_manager->pixel_ratio_);
+      info->ptMinTrackSize.x = static_cast<LONG>(
+          window_manager->minimum_size_.x * window_manager->pixel_ratio_);
     if (window_manager->minimum_size_.y != 0)
-      info->ptMinTrackSize.y =
-          static_cast<LONG> (window_manager->minimum_size_.y *
-          window_manager->pixel_ratio_);
+      info->ptMinTrackSize.y = static_cast<LONG>(
+          window_manager->minimum_size_.y * window_manager->pixel_ratio_);
     if (window_manager->maximum_size_.x != -1)
-      info->ptMaxTrackSize.x =
-          static_cast<LONG> (window_manager->maximum_size_.x *
-          window_manager->pixel_ratio_);
+      info->ptMaxTrackSize.x = static_cast<LONG>(
+          window_manager->maximum_size_.x * window_manager->pixel_ratio_);
     if (window_manager->maximum_size_.y != -1)
-      info->ptMaxTrackSize.y =
-          static_cast<LONG> (window_manager->maximum_size_.y *
-          window_manager->pixel_ratio_);
+      info->ptMaxTrackSize.y = static_cast<LONG>(
+          window_manager->maximum_size_.y * window_manager->pixel_ratio_);
     result = 0;
   } else if (message == WM_NCACTIVATE) {
     if (wParam == TRUE) {
@@ -214,21 +211,30 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     if (window_manager->aspect_ratio_ > 0) {
       RECT* rect = (LPRECT)lParam;
 
+      int title_bar_height =
+          static_cast<int>(window_manager->title_bar_height_);
       double aspect_ratio = window_manager->aspect_ratio_;
 
       int new_width = static_cast<int>(rect->right - rect->left);
-      int new_height = static_cast<int>(rect->bottom - rect->top);
+      int new_height =
+          static_cast<int>(rect->bottom - rect->top);
+
+      int frame_width = new_width;
+      int frame_height = new_height - title_bar_height;
 
       bool is_resizing_horizontally =
           wParam == WMSZ_LEFT || wParam == WMSZ_RIGHT ||
           wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT;
 
       if (is_resizing_horizontally) {
-        new_height = static_cast<int>(new_width / aspect_ratio);
+        frame_height = (int)std::round(frame_width / aspect_ratio);
       } else {
-        new_width = static_cast<int>(new_height * aspect_ratio);
+        frame_width = (int)std::round(frame_height * aspect_ratio);
       }
-
+      
+      new_width = frame_width;
+      new_height = frame_height + title_bar_height;
+      
       int left = rect->left;
       int top = rect->top;
       int right = rect->right;
@@ -267,6 +273,8 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
       rect->top = top;
       rect->right = right;
       rect->bottom = bottom;
+
+      return true;
     }
   } else if (message == WM_SIZE) {
     LONG_PTR gwlStyle =
@@ -309,13 +317,13 @@ std::optional<LRESULT> WindowManagerPlugin::HandleWindowProc(HWND hWnd,
     }
   } else if (message == WM_WINDOWPOSCHANGED) {
     if (window_manager->IsAlwaysOnBottom()) {
-        const flutter::EncodableMap& args = {
-		  {flutter::EncodableValue("isAlwaysOnBottom"),
-            		   flutter::EncodableValue(true)}};
-	    window_manager->SetAlwaysOnBottom(args);
-	  }
+      const flutter::EncodableMap& args = {
+          {flutter::EncodableValue("isAlwaysOnBottom"),
+           flutter::EncodableValue(true)}};
+      window_manager->SetAlwaysOnBottom(args);
+    }
   }
-  
+
   return result;
 }
 
@@ -545,10 +553,15 @@ void WindowManagerPlugin::HandleMethodCall(
         std::get<flutter::EncodableMap>(*method_call.arguments());
     window_manager->StartResizing(args);
     result->Success(flutter::EncodableValue(true));
+  } else if (method_name.compare("setTitleBarHeight") == 0) {
+    const flutter::EncodableMap& args =
+        std::get<flutter::EncodableMap>(*method_call.arguments());
+    window_manager->SetTitleBarHeight(args);
+    result->Success(flutter::EncodableValue(true));
   } else {
     result->NotImplemented();
   }
- }
+}
 
 }  // namespace
 
