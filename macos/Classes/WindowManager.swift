@@ -52,6 +52,7 @@ public class WindowManager: NSObject, NSWindowDelegate {
     private var _isPreventClose: Bool = false
     private var _isMaximized: Bool = false
     private var _isMaximizable: Bool = true
+    private var _titleBarHeight: NSNumber = 0.0
 
     override public init() {
         super.init()
@@ -67,6 +68,9 @@ public class WindowManager: NSObject, NSWindowDelegate {
         mainWindow.isOpaque = true
         mainWindow.hasShadow = false
         mainWindow.backgroundColor = NSColor.clear
+
+        let flutterViewController = mainWindow.contentViewController as! FlutterViewController
+        flutterViewController.backgroundColor = .clear
         
         if (mainWindow.styleMask.contains(.titled)) {
             let titleBarView: NSView = (mainWindow.standardWindowButton(.closeButton)?.superview)!.superview!
@@ -467,6 +471,10 @@ public class WindowManager: NSObject, NSWindowDelegate {
                 window.performDrag(with: window.currentEvent!)
             }
         }
+    }
+
+    public func setTitleBarHeight(_ args: [String: Any]) {
+        _titleBarHeight = args["height"] as! NSNumber
     }
     
     // NSWindowDelegate

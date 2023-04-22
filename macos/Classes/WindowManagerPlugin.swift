@@ -242,6 +242,10 @@ public class WindowManagerPlugin: NSObject, FlutterPlugin {
             windowManager.startDragging()
             result(true)
             break
+        case "setTitleBarHeight":
+            windowManager.setTitleBarHeight(args)
+            result(true)
+            break
         default:
             result(FlutterMethodNotImplemented)
         }
